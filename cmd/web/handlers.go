@@ -18,41 +18,22 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, snippet := range snippets {
-		fmt.Fprintf(w, "%+v\n", snippet)
-	}
+	data := app.newTemplateData(r)
+	data.Snippets = snippets
 
-	// files := []string{
-	// 	"./ui/html/base.tmpl",
-	// 	"./ui/html/pages/home.tmpl",
-	// 	"./ui/html/partials/nav.tmpl",
-	// }
+	app.render(w, r, http.StatusOK, "home.tmpl", data)
 
-	// ts, err := template.ParseFiles(files...)
-
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-
-	// err = ts.ExecuteTemplate(w, "base", nil)
-
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// }
-
-	// w.Write([]byte("Hello from Snippetbox"))
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
+
 	if err != nil || id < 1 {
 		http.NotFound(w, r)
 		return
 	}
 
 	snippet, err := app.snippets.Get(id)
-
 	if err != nil {
 		if errors.Is(err, models.ErrNoRecord) {
 			http.NotFound(w, r)
@@ -62,7 +43,11 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%+v", snippet)
+	data := app.newTemplateData(r)
+	data.Snippet = snippet
+
+	// Use the new render helper.
+	app.render(w, r, http.StatusOK, "view.tmpl", data)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
